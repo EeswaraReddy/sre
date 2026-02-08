@@ -1,0 +1,122 @@
+{
+    "gatewayName": "incident-handler-gateway",
+    "description": "AgentCore Gateway for multi-agent incident handler tools",
+    "endpoint": {
+        "path": "/mcp",
+        "authentication": {
+            "type": "cognito_jwt",
+            "userPoolId": "${USER_POOL_ID}",
+            "clientId": "${APP_CLIENT_ID}",
+            "region": "${AWS_REGION}"
+        },
+        "cors": {
+            "allowOrigins": [
+                "*"
+            ],
+            "allowMethods": [
+                "POST",
+                "OPTIONS"
+            ],
+            "allowHeaders": [
+                "Authorization",
+                "Content-Type",
+                "x-amz-bedrock-agentcore-search"
+            ]
+        }
+    },
+    "semanticSearch": {
+        "enabled": true,
+        "header": "x-amz-bedrock-agentcore-search",
+        "embeddingModel": "amazon.titan-embed-text-v2:0"
+    },
+    "targets": [
+        {
+            "name": "get_emr_logs",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-get-emr-logs",
+            "timeout": 30
+        },
+        {
+            "name": "get_glue_logs",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-get-glue-logs",
+            "timeout": 30
+        },
+        {
+            "name": "get_mwaa_logs",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-get-mwaa-logs",
+            "timeout": 30
+        },
+        {
+            "name": "get_cloudwatch_alarm",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-get-cloudwatch-alarm",
+            "timeout": 30
+        },
+        {
+            "name": "get_s3_logs",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-get-s3-logs",
+            "timeout": 30
+        },
+        {
+            "name": "verify_source_data",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-verify-source-data",
+            "timeout": 30
+        },
+        {
+            "name": "get_athena_query",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-get-athena-query",
+            "timeout": 30
+        },
+        {
+            "name": "retry_emr",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-retry-emr",
+            "timeout": 300
+        },
+        {
+            "name": "retry_glue_job",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-retry-glue-job",
+            "timeout": 300
+        },
+        {
+            "name": "retry_airflow_dag",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-retry-airflow-dag",
+            "timeout": 300
+        },
+        {
+            "name": "retry_athena_query",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-retry-athena-query",
+            "timeout": 300
+        },
+        {
+            "name": "retry_kafka",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-retry-kafka",
+            "timeout": 300
+        },
+        {
+            "name": "update_servicenow_ticket",
+            "type": "lambda",
+            "lambdaArn": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:incident-handler-update-servicenow-ticket",
+            "timeout": 30
+        }
+    ],
+    "interceptors": {
+        "request": [],
+        "response": []
+    },
+    "logging": {
+        "enabled": true,
+        "logLevel": "INFO",
+        "includeRequestBody": false,
+        "includeResponseBody": false
+    }
+}

@@ -1,0 +1,238 @@
+[
+    {
+        "name": "glue_failure_with_retry",
+        "description": "Glue job failure that should be auto-retried",
+        "incident": {
+            "sys_id": "INC0001234",
+            "short_description": "Glue job 'etl-daily-load' failed with OutOfMemory error at 03:45 AM",
+            "description": "The nightly ETL job failed during data transformation phase. Error: Java heap space exceeded.",
+            "category": "Data Pipeline",
+            "subcategory": "ETL",
+            "priority": "2",
+            "additional_info": {
+                "job_name": "etl-daily-load",
+                "run_id": "jr_abc123def456"
+            }
+        },
+        "expected": {
+            "intent": "glue_etl_failure",
+            "min_confidence": 0.7,
+            "decision": [
+                "auto_retry",
+                "auto_close"
+            ]
+        }
+    },
+    {
+        "name": "emr_step_failure",
+        "description": "EMR step failure requiring investigation",
+        "incident": {
+            "sys_id": "INC0001235",
+            "short_description": "EMR cluster j-1234ABCD step 's-5678EFGH' failed",
+            "description": "Spark job on EMR failed with executor OOM. Cluster: j-1234ABCD",
+            "category": "Big Data",
+            "subcategory": "EMR",
+            "priority": "2",
+            "additional_info": {
+                "cluster_id": "j-1234ABCD",
+                "step_id": "s-5678EFGH"
+            }
+        },
+        "expected": {
+            "intent": "emr_failure",
+            "min_confidence": 0.7,
+            "decision": [
+                "auto_retry",
+                "escalate"
+            ]
+        }
+    },
+    {
+        "name": "access_denied_override",
+        "description": "Access denied should always escalate (policy override)",
+        "incident": {
+            "sys_id": "INC0001236",
+            "short_description": "S3 access denied for bucket 'data-lake-prod'",
+            "description": "Lambda function failed with AccessDenied when writing to s3://data-lake-prod/output/",
+            "category": "Security",
+            "subcategory": "IAM",
+            "priority": "1",
+            "additional_info": {
+                "bucket_name": "data-lake-prod",
+                "error_code": "AccessDenied"
+            }
+        },
+        "expected": {
+            "intent": "access_denied",
+            "min_confidence": 0.6,
+            "decision": [
+                "escalate"
+            ],
+            "override_expected": true
+        }
+    },
+    {
+        "name": "kafka_events_failed_override",
+        "description": "Kafka events failed should always go to human review (policy override)",
+        "incident": {
+            "sys_id": "INC0001237",
+            "short_description": "Kafka consumer failed to process events from topic 'orders'",
+            "description": "Consumer lag increased to 100k messages. Multiple partition errors detected.",
+            "category": "Streaming",
+            "subcategory": "Kafka",
+            "priority": "1",
+            "additional_info": {
+                "cluster_arn": "arn:aws:kafka:us-east-1:123456789:cluster/prod-msk/abc123",
+                "topic": "orders"
+            }
+        },
+        "expected": {
+            "intent": "kafka_events_failed",
+            "min_confidence": 0.6,
+            "decision": [
+                "human_review"
+            ],
+            "override_expected": true
+        }
+    },
+    {
+        "name": "dag_failure_airflow",
+        "description": "Airflow DAG failure",
+        "incident": {
+            "sys_id": "INC0001238",
+            "short_description": "Airflow DAG 'daily_etl_pipeline' failed at task 'transform_data'",
+            "description": "DAG execution failed: Task transform_data raised exception: ValueError: Empty dataframe",
+            "category": "Orchestration",
+            "subcategory": "Airflow",
+            "priority": "2",
+            "additional_info": {
+                "environment_name": "prod-airflow",
+                "dag_id": "daily_etl_pipeline",
+                "task_id": "transform_data",
+                "execution_date": "2024-01-15T00:00:00+00:00"
+            }
+        },
+        "expected": {
+            "intent": "dag_failure",
+            "min_confidence": 0.7,
+            "decision": [
+                "auto_retry",
+                "escalate"
+            ]
+        }
+    },
+    {
+        "name": "athena_query_failure",
+        "description": "Athena query timeout",
+        "incident": {
+            "sys_id": "INC0001239",
+            "short_description": "Athena query timeout - query_id abc-def-123",
+            "description": "Scheduled Athena query exceeded 30 minute timeout. Query scanned 2TB of data.",
+            "category": "Analytics",
+            "subcategory": "Athena",
+            "priority": "3",
+            "additional_info": {
+                "query_execution_id": "abc-def-123-456-789"
+            }
+        },
+        "expected": {
+            "intent": "athena_failure",
+            "min_confidence": 0.7,
+            "decision": [
+                "auto_retry",
+                "escalate"
+            ]
+        }
+    },
+    {
+        "name": "data_missing",
+        "description": "Expected data not found",
+        "incident": {
+            "sys_id": "INC0001240",
+            "short_description": "Daily sales data missing from s3://data-lake/sales/dt=2024-01-15/",
+            "description": "Downstream reports failed because source data was not available at expected location.",
+            "category": "Data Quality",
+            "subcategory": "Missing Data",
+            "priority": "2",
+            "additional_info": {
+                "s3_path": "s3://data-lake/sales/dt=2024-01-15/",
+                "database": "sales_db",
+                "table_name": "daily_sales"
+            }
+        },
+        "expected": {
+            "intent": "data_missing",
+            "min_confidence": 0.6,
+            "decision": [
+                "escalate",
+                "human_review"
+            ]
+        }
+    },
+    {
+        "name": "cloudwatch_alarm_trigger",
+        "description": "CloudWatch alarm for DAG metrics",
+        "incident": {
+            "sys_id": "INC0001241",
+            "short_description": "CloudWatch alarm 'DAG-Latency-High' in ALARM state",
+            "description": "Alarm triggered: DAG execution latency exceeded 2 hours for 3 consecutive periods.",
+            "category": "Monitoring",
+            "subcategory": "Alarms",
+            "priority": "2",
+            "additional_info": {
+                "alarm_name": "DAG-Latency-High"
+            }
+        },
+        "expected": {
+            "intent": "dag_alarm",
+            "min_confidence": 0.6,
+            "decision": [
+                "escalate",
+                "human_review"
+            ]
+        }
+    },
+    {
+        "name": "unknown_error",
+        "description": "Vague incident with unclear cause",
+        "incident": {
+            "sys_id": "INC0001242",
+            "short_description": "Something failed in the data pipeline",
+            "description": "System not working as expected. Please investigate.",
+            "category": "General",
+            "subcategory": "Other",
+            "priority": "3"
+        },
+        "expected": {
+            "intent": "unknown",
+            "max_confidence": 0.5,
+            "decision": [
+                "human_review",
+                "escalate"
+            ]
+        }
+    },
+    {
+        "name": "source_zero_data",
+        "description": "Source data exists but is empty",
+        "incident": {
+            "sys_id": "INC0001243",
+            "short_description": "Source file s3://raw-data/transactions/2024-01-15.csv contains 0 records",
+            "description": "Upstream system produced empty file. ETL job skipped processing.",
+            "category": "Data Quality",
+            "subcategory": "Empty Data",
+            "priority": "2",
+            "additional_info": {
+                "s3_path": "s3://raw-data/transactions/2024-01-15.csv"
+            }
+        },
+        "expected": {
+            "intent": "source_zero_data",
+            "min_confidence": 0.6,
+            "decision": [
+                "escalate",
+                "human_review"
+            ]
+        }
+    }
+]

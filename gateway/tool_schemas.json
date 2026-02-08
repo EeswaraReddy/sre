@@ -1,0 +1,334 @@
+{
+    "tools": [
+        {
+            "name": "get_emr_logs",
+            "description": "Retrieve EMR cluster and step logs. Use this tool to investigate EMR job failures, get step execution details, and fetch logs from S3 or CloudWatch.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "cluster_id": {
+                        "type": "string",
+                        "description": "EMR cluster ID (e.g., j-XXXXXXXXXXXXX)"
+                    },
+                    "step_id": {
+                        "type": "string",
+                        "description": "Optional EMR step ID to get specific step logs"
+                    }
+                },
+                "required": [
+                    "cluster_id"
+                ]
+            }
+        },
+        {
+            "name": "get_glue_logs",
+            "description": "Retrieve Glue ETL job run logs and execution details. Use this tool to investigate Glue job failures, get error messages, and fetch CloudWatch logs.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "job_name": {
+                        "type": "string",
+                        "description": "Glue job name"
+                    },
+                    "run_id": {
+                        "type": "string",
+                        "description": "Optional specific job run ID to investigate"
+                    }
+                },
+                "required": [
+                    "job_name"
+                ]
+            }
+        },
+        {
+            "name": "get_mwaa_logs",
+            "description": "Retrieve MWAA (Managed Apache Airflow) logs for DAG runs and tasks. Use this tool to investigate Airflow DAG failures and task errors.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "environment_name": {
+                        "type": "string",
+                        "description": "MWAA environment name"
+                    },
+                    "dag_id": {
+                        "type": "string",
+                        "description": "Optional DAG ID to filter logs"
+                    },
+                    "task_id": {
+                        "type": "string",
+                        "description": "Optional task ID to filter logs"
+                    },
+                    "execution_date": {
+                        "type": "string",
+                        "description": "Optional execution date (ISO format)"
+                    }
+                },
+                "required": [
+                    "environment_name"
+                ]
+            }
+        },
+        {
+            "name": "get_cloudwatch_alarm",
+            "description": "Retrieve CloudWatch alarm details, current state, and history. Use this tool to investigate alarm triggers and get metric data.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "alarm_name": {
+                        "type": "string",
+                        "description": "Specific alarm name to retrieve"
+                    },
+                    "alarm_prefix": {
+                        "type": "string",
+                        "description": "Alarm name prefix to search for multiple alarms"
+                    }
+                },
+                "required": []
+            }
+        },
+        {
+            "name": "get_s3_logs",
+            "description": "Retrieve S3 server access logs for a bucket. Use this tool to investigate S3 access patterns, errors, and data access issues.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "bucket_name": {
+                        "type": "string",
+                        "description": "S3 bucket name"
+                    },
+                    "prefix": {
+                        "type": "string",
+                        "description": "Optional key prefix to filter logs"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "description": "Optional start time (ISO format)"
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "description": "Optional end time (ISO format)"
+                    }
+                },
+                "required": [
+                    "bucket_name"
+                ]
+            }
+        },
+        {
+            "name": "verify_source_data",
+            "description": "Verify source data availability and validity. Use this tool to check if data exists, is recent, and has expected content. Supports both S3 paths and Glue table verification.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "s3_path": {
+                        "type": "string",
+                        "description": "S3 path to verify (e.g., s3://bucket/prefix/)"
+                    },
+                    "database": {
+                        "type": "string",
+                        "description": "Glue database name (use with table_name)"
+                    },
+                    "table_name": {
+                        "type": "string",
+                        "description": "Glue table name (use with database)"
+                    },
+                    "partition_filter": {
+                        "type": "string",
+                        "description": "Optional Glue partition filter expression"
+                    }
+                },
+                "required": []
+            }
+        },
+        {
+            "name": "get_athena_query",
+            "description": "Retrieve Athena query execution details including status, statistics, errors, and result preview. Use this tool to investigate failed or slow Athena queries.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query_execution_id": {
+                        "type": "string",
+                        "description": "Athena query execution ID"
+                    }
+                },
+                "required": [
+                    "query_execution_id"
+                ]
+            }
+        },
+        {
+            "name": "retry_emr",
+            "description": "Retry a failed EMR step by adding a new step with the same configuration. Use this tool to automatically recover from transient EMR failures.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "cluster_id": {
+                        "type": "string",
+                        "description": "EMR cluster ID"
+                    },
+                    "step_id": {
+                        "type": "string",
+                        "description": "Failed step ID to retry"
+                    }
+                },
+                "required": [
+                    "cluster_id",
+                    "step_id"
+                ]
+            }
+        },
+        {
+            "name": "retry_glue_job",
+            "description": "Retry a failed Glue job by starting a new run with the same or modified arguments. Use this tool to recover from Glue ETL failures.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "job_name": {
+                        "type": "string",
+                        "description": "Glue job name to retry"
+                    },
+                    "run_id": {
+                        "type": "string",
+                        "description": "Optional failed run ID to copy arguments from"
+                    },
+                    "arguments": {
+                        "type": "object",
+                        "description": "Optional argument overrides for the new run"
+                    }
+                },
+                "required": [
+                    "job_name"
+                ]
+            }
+        },
+        {
+            "name": "retry_airflow_dag",
+            "description": "Trigger an Airflow DAG run in MWAA. Use this tool to retry failed DAG executions or trigger new runs.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "environment_name": {
+                        "type": "string",
+                        "description": "MWAA environment name"
+                    },
+                    "dag_id": {
+                        "type": "string",
+                        "description": "DAG ID to trigger"
+                    },
+                    "execution_date": {
+                        "type": "string",
+                        "description": "Optional specific execution date to re-trigger"
+                    },
+                    "conf": {
+                        "type": "object",
+                        "description": "Optional DAG run configuration"
+                    }
+                },
+                "required": [
+                    "environment_name",
+                    "dag_id"
+                ]
+            }
+        },
+        {
+            "name": "retry_athena_query",
+            "description": "Re-execute an Athena query. Use this tool to retry failed queries with the same or modified parameters.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query_execution_id": {
+                        "type": "string",
+                        "description": "Original query execution ID to retry"
+                    },
+                    "query": {
+                        "type": "string",
+                        "description": "Alternative: provide query string directly"
+                    },
+                    "workgroup": {
+                        "type": "string",
+                        "description": "Athena workgroup (default: primary)"
+                    },
+                    "database": {
+                        "type": "string",
+                        "description": "Database context for the query"
+                    }
+                },
+                "required": []
+            }
+        },
+        {
+            "name": "retry_kafka",
+            "description": "Retry failed Kafka event processing by re-invoking the consumer Lambda or checking event source mappings.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "consumer_function": {
+                        "type": "string",
+                        "description": "Lambda function name that processes Kafka events"
+                    },
+                    "cluster_arn": {
+                        "type": "string",
+                        "description": "Optional MSK cluster ARN"
+                    },
+                    "topic": {
+                        "type": "string",
+                        "description": "Kafka topic name"
+                    },
+                    "failed_records": {
+                        "type": "array",
+                        "description": "Optional list of failed records to replay",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "required": [
+                    "consumer_function"
+                ]
+            }
+        },
+        {
+            "name": "update_servicenow_ticket",
+            "description": "Update a ServiceNow incident ticket with status, resolution notes, and RCA. Also stores RCA document in S3.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "sys_id": {
+                        "type": "string",
+                        "description": "ServiceNow incident sys_id"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "New incident status (resolved, closed, in_progress, on_hold, escalated)",
+                        "enum": [
+                            "resolved",
+                            "closed",
+                            "in_progress",
+                            "on_hold",
+                            "escalated"
+                        ]
+                    },
+                    "rca": {
+                        "type": "object",
+                        "description": "Root Cause Analysis document to store"
+                    },
+                    "resolution_notes": {
+                        "type": "string",
+                        "description": "Resolution notes for the ticket"
+                    },
+                    "work_notes": {
+                        "type": "string",
+                        "description": "Work notes to add"
+                    },
+                    "assigned_to": {
+                        "type": "string",
+                        "description": "User to assign ticket to (for escalation)"
+                    }
+                },
+                "required": [
+                    "sys_id"
+                ]
+            }
+        }
+    ]
+}
