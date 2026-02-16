@@ -1,4 +1,24 @@
+# Core Agent Framework
 strands-agents>=1.0.0
-boto3>=1.34.0
-requests>=2.31.0
+
+# AWS SDK
+boto3>=1.39.7
+botocore>=1.39.7
+
+# Bedrock AgentCore Runtime
+bedrock-agentcore>=0.1.1
+
+# ServiceNow & HTTP
+requests>=2.28.0
+httpx>=0.25.0
+
+# Schema Validation
 jsonschema>=4.21.0
+pydantic>=2.0.0
+
+# OpenTelemetry (Observability)
+aws-opentelemetry-distro~=0.10.1
+
+# Utilities
+python-dotenv>=1.0.0
+pyyaml>=6.0.1

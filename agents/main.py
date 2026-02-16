@@ -25,15 +25,20 @@ cloudwatch = boto3.client("cloudwatch")
 
 # BedrockAgentCoreApp decorator setup
 try:
-    from strands_agents.bedrock import BedrockAgentCoreApp
+    from bedrock_agentcore.runtime import BedrockAgentCoreApp
     app = BedrockAgentCoreApp()
 except ImportError:
-    # Fallback for local testing
-    logger.warning("BedrockAgentCoreApp not available, using mock decorator")
-    class MockApp:
-        def handler(self, func):
-            return func
-    app = MockApp()
+    try:
+        # Fallback: try strands-agents package
+        from strands.agent.bedrock import BedrockAgentCoreApp
+        app = BedrockAgentCoreApp()
+    except ImportError:
+        # Fallback for local testing without AgentCore SDK
+        logger.warning("BedrockAgentCoreApp not available, using mock decorator for local testing")
+        class MockApp:
+            def handler(self, func):
+                return func
+        app = MockApp()
 
 
 def emit_metric(metric_name: str, value: float = 1.0, dimensions: dict = None, unit: str = "Count"):
