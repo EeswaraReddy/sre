@@ -1,72 +1,37 @@
 """Action Agent - executes retry and validation actions."""
 import json
 import logging
-from typing import Any
 
 from strands import Agent
+from strands.models import BedrockModel
 
 from .config import MODEL_ID
 from .schemas import parse_agent_response
+from .prompts import ACTION_AGENT_PROMPT
 
 logger = logging.getLogger(__name__)
 
-# System prompt for action execution
-ACTION_SYSTEM_PROMPT = """You are an AWS data-lake action executor. Your role is to execute remediation actions based on investigation findings.
-
-## Your Objectives
-
-1. Evaluate if an action should be taken based on investigation results.
-2. Execute the appropriate retry or validation action.
-3. Monitor the result and report success or failure.
-
-## Available Actions
-
-### Retry Actions
-- `retry_emr`: Retry a failed EMR step
-- `retry_glue_job`: Restart a Glue job
-- `retry_airflow_dag`: Trigger a DAG re-run
-- `retry_athena_query`: Re-execute an Athena query
-- `retry_kafka`: Retry Kafka event processing
-
-### Validation Actions
-- `verify_source_data`: Re-verify data availability
-
-## Action Guidelines
-
-1. Only execute actions if the investigation recommends it.
-2. Use specific resource IDs from the investigation findings.
-3. For retries, ensure the original failure was transient (not a code bug).
-4. Do NOT retry if the error indicates a permanent failure (permissions, code bugs).
-
-## Response Format
-
-After action execution, provide results in this JSON format:
-
-```json
-{
-    "action": "<action_taken or 'none'>",
-    "success": <true/false>,
-    "details": {
-        "resource_id": "<resource that was acted upon>",
-        "new_execution_id": "<new job/step ID if applicable>",
-        "status": "<current status of retry>"
-    },
-    "error": "<error message if failed, null otherwise>"
-}
-```
-"""
+# Create BedrockModel instance
+bedrock_model = BedrockModel(model_id=MODEL_ID)
 
 
-def create_action_agent(tools: list) -> Agent:
-    """Create the action agent with retry tools."""
+def create_action_agent(tools: list = None) -> Agent:
+    """Create the action agent with retry tools.
+    
+    Args:
+        tools: List of MCP action tools from Gateway
+        
+    Returns:
+        Configured Agent instance
+    """
     return Agent(
-        model=MODEL_ID,
-        system_prompt=ACTION_SYSTEM_PROMPT,
-        tools=tools,
+        system_prompt=ACTION_AGENT_PROMPT,
+        model=bedrock_model,
+        tools=tools or [],
     )
 
 
-async def execute_action(
+def execute_action(
     investigation: dict,
     incident: dict,
     mcp_tools: list = None
@@ -128,15 +93,17 @@ async def execute_action(
 - Sys ID: {incident.get('sys_id', 'N/A')}
 - Description: {incident.get('short_description', 'N/A')}
 
-Execute the appropriate action tool with the correct parameters based on the investigation findings. If the findings include specific resource IDs (cluster_id, job_name, etc.), use those.
-"""
+Execute the appropriate action tool with the correct parameters based on the investigation findings. If the findings include specific resource IDs (cluster_id, job_name, etc.), use those."""
 
     try:
         if not mcp_tools:
             logger.warning("No MCP tools provided, using mock action")
             return _mock_action(recommended_action, investigation)
         
+        # Create action agent with tools
         agent = create_action_agent(mcp_tools)
+        
+        # Call the agent
         result = agent(prompt)
         response_text = str(result)
         
@@ -213,7 +180,5 @@ def _mock_action(recommended_action: str, investigation: dict) -> dict:
     }
 
 
-def execute_action_sync(investigation: dict, incident: dict, mcp_tools: list = None) -> dict:
-    """Synchronous wrapper for execute_action."""
-    import asyncio
-    return asyncio.run(execute_action(investigation, incident, mcp_tools))
+# Alias for backward compatibility  
+execute_action_sync = execute_action
