@@ -2,15 +2,39 @@
 
 An AI-powered incident handler that automatically classifies, investigates, and resolves AWS data lake incidents using Amazon Bedrock AgentCore Runtime, AgentCore Gateway (MCP), and Strands Agents SDK.
 
-## Architecture Overview
+## System Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         ServiceNow Incident                              │
-└─────────────────────────────────┬───────────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────────────────┐
+│                           ServiceNow                                      │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  New Incidents: assigned_to="Data Lake Platform Team"            │    │
+│  │  Status: New → In Progress → Resolved/Closed                      │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+└────────────────────────────────┬─────────────────────────────────────────┘
+                                 │
+                                 │ ① Polling (every 5 min)
+                                 ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          AWS EventBridge                                  │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Schedule Rule: rate(5 minutes)                                   │    │
+│  │  Trigger: Poller Lambda                                           │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+└────────────────────────────────┬─────────────────────────────────────────┘
+                                 │
+                                 │ ② Trigger
+                                 ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                    Poller Lambda Function                                 │
+│  • Get new incidents from ServiceNow API                                  │
+│  • Update status to "In Progress"                                         │
+│  • Invoke AgentCore Runtime (async)                                       │
+└────────────────────────────────┬─────────────────────────────────────────┘
+                                 │
+                                 │ ③ Invoke with incident payload
+                                 ▼
+┌──────────────────────────────────────────────────────────────────────────┐
 │                    Bedrock AgentCore Runtime                             │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │                     Main Orchestrator                            │    │
@@ -26,6 +50,7 @@ An AI-powered incident handler that automatically classifies, investigates, and 
 │  └─────────────────────────────┬───────────────────────────────────┘    │
 └────────────────────────────────┼────────────────────────────────────────┘
                                  │
+                                 │ ④ Call MCP tools
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     AgentCore Gateway (MCP)                              │
